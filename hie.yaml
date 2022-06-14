@@ -1,0 +1,13 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "simplex-tree:lib"
+
+    - path: "./app/Main.hs"
+      component: "simplex-tree:exe:simplex-tree-exe"
+
+    - path: "./app/Paths_simplex_tree.hs"
+      component: "simplex-tree:exe:simplex-tree-exe"
+
+    - path: "./test"
+      component: "simplex-tree:test:simplex-tree-test"
