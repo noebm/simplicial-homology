@@ -4,14 +4,14 @@ import Lib
 import Data.List (group, sort, find)
 import Data.Tree
 
-newtype SimplexTree a = SimplexTree (Forest a)
+newtype SimplicialComplex a = SimplicialComplex (Forest a)
   deriving (Show)
 
-instance Functor SimplexTree where
-  fmap f (SimplexTree xs) = SimplexTree $ fmap (fmap f) xs
+instance Functor SimplicialComplex where
+  fmap f (SimplicialComplex xs) = SimplicialComplex $ fmap (fmap f) xs
 
-draw :: Show a => SimplexTree a -> String
-draw (SimplexTree xs) = drawForest $ fmap (fmap show) xs
+draw :: Show a => SimplicialComplex a -> String
+draw (SimplicialComplex xs) = drawForest $ fmap (fmap show) xs
 
 newtype Simplex a = Simplex [a]
   deriving (Show, Ord, Eq)
@@ -19,50 +19,49 @@ newtype Simplex a = Simplex [a]
 prepend :: a -> Simplex a -> Simplex a
 prepend v (Simplex vs) = Simplex (v : vs)
 
--- insert :: Ord a => Simplex a -> SimplexTree a -> SimplexTree a
+-- insert :: Ord a => Simplex a -> SimplicialComplex a -> SimplicialComplex a
 -- insert (Simplex []) t = t
--- insert (Simplex (v : vs)) (SimplexTree t) = SimplexTree (as ++ (v, insert (Simplex vs) s) : b)
+-- insert (Simplex (v : vs)) (SimplicialComplex t) = SimplicialComplex (as ++ (v, insert (Simplex vs) s) : b)
 --   where (as, bs) = break ((>= v) . fst) $ t
 
-simplices :: SimplexTree a -> [Simplex a]
-simplices (SimplexTree xs) = go =<< xs where
+simplices :: SimplicialComplex a -> [Simplex a]
+simplices (SimplicialComplex xs) = go =<< xs where
   go :: Tree a -> [ Simplex a ]
   go = foldTree (\v f -> Simplex [v] : (prepend v <$> concat f))
 
-
 -- disconnected simplial 0-complex of size 2
-test0 :: SimplexTree Int
-test0 = SimplexTree [Node 0 [], Node 1 []]
+test0 :: SimplicialComplex Int
+test0 = SimplicialComplex [Node 0 [], Node 1 []]
 
-test1 :: SimplexTree Int
-test1 = SimplexTree [Node 0 [Node 1 []], Node 1 []]
+test1 :: SimplicialComplex Int
+test1 = SimplicialComplex [Node 0 [Node 1 []], Node 1 []]
 
-complete :: Int -> SimplexTree Int
-complete = SimplexTree . go where
+complete :: Int -> SimplicialComplex Int
+complete = SimplicialComplex . go where
 
   go :: Int -> [ Tree Int ]
   go n = unfoldForest (\l -> (l, [l+1..n])) [0..n]
 
-completeOrd :: Ord a => [a] -> SimplexTree a
+completeOrd :: Ord a => [a] -> SimplicialComplex a
 completeOrd xs = (xs' !!) <$> complete (length xs' - 1)
   where xs' = map head . group . sort $ xs
 
 main :: IO ()
 main = do
   putStrLn "test0"
-  print test0
+  putStr $ draw test0
 
   putStrLn "test1"
-  print test1
+  putStr $ draw test1
 
   putStrLn "complete 0"
-  print (complete 0)
+  putStr $ draw (complete 0)
 
   putStrLn "complete 1"
-  print (complete 1)
+  putStr $ draw (complete 1)
 
   putStrLn "complete 2"
-  print (complete 2)
+  putStr $ draw (complete 2)
 
   putStrLn "completeOrd \"abc\""
-  print (completeOrd "abc")
+  putStr $ draw (completeOrd "abc")
