@@ -1,6 +1,7 @@
 module Lib
-    ( someFunc
+    ( module Simplex
+    , module SimplicialComplex
     ) where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+import Simplex
+import SimplicialComplex
