@@ -25,7 +25,7 @@ prop_containedSimplexComplex s =
   in forAll (elements $ faces s) $ \f -> f `contained` sc
 
 instance (Ord a, Arbitrary a) => Arbitrary (Simplex a) where
-  arbitrary = Simplex <$> orderedList
+  arbitrary = fromList <$> arbitrary
 
 instance (Ord a, Arbitrary a) => Arbitrary (SimplicialComplex a) where
   arbitrary = fromSimplices <$> arbitrary
