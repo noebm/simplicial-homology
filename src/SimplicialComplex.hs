@@ -54,6 +54,7 @@ completeOrd xs = (xs' !!) <$> complete (length xs' - 1)
 -- TODO: very inefficient use internal (sorted) structure of complex
 -- to find it more efficiently
 contained :: Eq a => Simplex a -> SimplicialComplex a -> Bool
+contained (Simplex []) _ = True
 contained s sc = s `elem` simplices sc
 
 -- TODO: efficient implementation
