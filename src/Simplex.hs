@@ -14,3 +14,10 @@ toList (Simplex xs) = xs
 
 prepend :: a -> Simplex a -> Simplex a
 prepend v (Simplex vs) = Simplex (v : vs)
+
+subsets :: [a] -> [[a]]
+subsets [] = [[]]
+subsets (x:xs) = subsets xs ++ map (x:) (subsets xs)
+
+faces :: Simplex a -> [Simplex a]
+faces (Simplex xs) = Simplex <$> subsets xs

@@ -18,8 +18,14 @@ prop_insertDimension s =
   length s < 20 ==> -- limit dimension to 20
   dimension (fromSimplices [s]) == length s - 1
 
+prop_containedSimplexComplex :: (Show a, Ord a) => Simplex a -> Property
+prop_containedSimplexComplex s =
+  length s < 20 ==> -- limit dimension to 20
+  let sc = simplexComplex s
+  in forAll (elements $ faces s) $ \f -> f `contained` sc
+
 instance (Ord a, Arbitrary a) => Arbitrary (Simplex a) where
-  arbitrary = fromList <$> arbitrary
+  arbitrary = Simplex <$> orderedList
 
 instance (Ord a, Arbitrary a) => Arbitrary (SimplicialComplex a) where
   arbitrary = fromSimplices <$> arbitrary
