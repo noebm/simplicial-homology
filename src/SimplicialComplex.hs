@@ -27,3 +27,12 @@ complete = SimplicialComplex . go where
 completeOrd :: Ord a => [a] -> SimplicialComplex a
 completeOrd xs = (xs' !!) <$> complete (length xs' - 1)
   where xs' = map head . group . sort $ xs
+
+-- TODO: very inefficient use internal (sorted) structure of complex
+-- to find it more efficiently
+contained :: Eq a => Simplex a -> SimplicialComplex a -> Bool
+contained s sc = s `elem` simplices sc
+
+-- TODO: efficient implementation
+dimension :: Ord a => SimplicialComplex a -> Int
+dimension (SimplicialComplex xs) = (\x -> x - 1) $ maximum $ length . levels <$> xs
