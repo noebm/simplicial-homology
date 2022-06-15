@@ -58,4 +58,7 @@ contained s sc = s `elem` simplices sc
 
 -- TODO: efficient implementation
 dimension :: Ord a => SimplicialComplex a -> Int
-dimension (SimplicialComplex xs) = (\x -> x - 1) $ maximum $ length . levels <$> xs
+dimension (SimplicialComplex xs) = (\x -> x - 1) $
+  if null xs
+     then 0
+     else maximum $ length . levels <$> xs
