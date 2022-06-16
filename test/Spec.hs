@@ -10,22 +10,23 @@ prop_SimplexOrdered (Simplex xs) = all (uncurry (<)) $ zip (init xs) (tail xs)
 prop_complexId :: (Eq a, Ord a) => SimplicialComplex a -> Bool
 prop_complexId sc = fromSimplices (simplices sc) == sc
 
-prop_simplexId :: Ord a => [Simplex a] -> Bool
-prop_simplexId s = simplices (fromSimplices s) >= s
+prop_simplexId :: Ord a => [Simplex a] -> Property
+prop_simplexId s =
+  length s < 20 ==>
+  let s' = simplices (fromSimplices s)
+   in all (`elem` s') s
 
-prop_insertDimension :: Ord a => Simplex a -> Property
+prop_insertDimension :: Ord a => Simplex a -> Bool
 prop_insertDimension s =
-  length s < 20 ==> -- limit dimension to 20
   dimension (fromSimplices [s]) == length s - 1
 
 prop_containedSimplexComplex :: (Show a, Ord a) => Simplex a -> Property
 prop_containedSimplexComplex s =
-  length s < 20 ==> -- limit dimension to 20
   let sc = simplexComplex s
   in forAll (elements $ faces s) $ \f -> f `contained` sc
 
 instance (Ord a, Arbitrary a) => Arbitrary (Simplex a) where
-  arbitrary = fromList <$> arbitrary
+  arbitrary = fromList <$> (arbitrary `suchThat` ((<10) . length))
 
 instance (Ord a, Arbitrary a) => Arbitrary (SimplicialComplex a) where
   arbitrary = fromSimplices <$> arbitrary
