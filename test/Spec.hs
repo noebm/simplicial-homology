@@ -10,9 +10,8 @@ prop_SimplexOrdered (Simplex xs) = all (uncurry (<)) $ zip (init xs) (tail xs)
 prop_complexId :: (Eq a, Ord a) => SimplicialComplex a -> Bool
 prop_complexId sc = fromSimplices (simplices sc) == sc
 
-prop_simplexId :: Ord a => [Simplex a] -> Property
+prop_simplexId :: Ord a => [Simplex a] -> Bool
 prop_simplexId s =
-  length s < 20 ==>
   let s' = simplices (fromSimplices s)
    in all (`elem` s') s
 
