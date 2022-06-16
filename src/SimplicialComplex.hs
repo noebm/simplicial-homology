@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 module SimplicialComplex where
 
 import Data.Tree
@@ -22,19 +23,19 @@ simplices (SimplicialComplex xs) = Simplex [] : (go =<< xs) where
   go = foldTree (\v f -> Simplex [v] : (prepend v <$> concat f))
 
 simplexComplex :: Simplex a -> SimplicialComplex a
-simplexComplex (Simplex s) = SimplicialComplex . go $ s where
-  go (s0:s) = Node s0 (go s): go s
+simplexComplex (Simplex s) = SimplicialComplex $ go s where
   go [] = []
+  go (s0:s) = let !sc = go s in Node s0 sc: sc
 
 insert :: Ord a => Simplex a -> SimplicialComplex a -> SimplicialComplex a
 insert (Simplex s) (SimplicialComplex sc) = SimplicialComplex $ go s sc where
 
   go :: Ord a => [a] -> Forest a -> Forest a
-  go s [] | SimplicialComplex sc <- simplexComplex (Simplex s) = sc
   go [] sc = sc
+  go (s0:s') [] = let !sc = go s' [] in Node s0 sc : sc
   go s@(s0:s') sc@(Node v t0 : sc') =
     case s0 `compare` v of
-      LT | SimplicialComplex sc0 <- simplexComplex (Simplex s) -> sc0 ++ sc
+      LT -> Node s0 (go s' []) : go s' sc
       EQ -> Node v (go s' t0) : go s' sc'
       GT -> head sc : go s sc'
 
