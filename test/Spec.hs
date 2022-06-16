@@ -2,6 +2,7 @@
 
 import Lib
 import Test.QuickCheck
+import Data.List
 
 prop_SimplexOrdered :: Ord a => Simplex a -> Bool
 prop_SimplexOrdered s | xs <- toList s =
@@ -25,6 +26,17 @@ prop_containedSimplexComplex :: (Show a, Ord a) => Simplex a -> Property
 prop_containedSimplexComplex s =
   let sc = simplexComplex s
   in forAll (elements $ faces s) $ \f -> f `contained` sc
+
+prop_Simplex_fromList_permutation_invariant :: (Show a, Ord a) => [a] -> Property
+prop_Simplex_fromList_permutation_invariant xs =
+  length xs < 10 ==>
+    let s = fromList xs
+     in forAll (shuffle xs) $ \ys -> fromList ys == s
+
+prop_Simplex_fromList_multiplicity_invariant :: Ord a => [a] -> Property
+prop_Simplex_fromList_multiplicity_invariant xs =
+    let s = fromList xs
+     in length xs < 10 ==> fromList (nub xs) == s
 
 instance (Ord a, Arbitrary a) => Arbitrary (Simplex a) where
   arbitrary = fromList <$> (arbitrary `suchThat` ((<10) . length))
