@@ -17,7 +17,7 @@ draw :: Show a => SimplicialComplex a -> String
 draw (SimplicialComplex xs) = drawForest $ fmap (fmap show) xs
 
 simplices :: SimplicialComplex a -> [Simplex a]
-simplices (SimplicialComplex xs) = go =<< xs where
+simplices (SimplicialComplex xs) = Simplex [] : (go =<< xs) where
   go :: Tree a -> [ Simplex a ]
   go = foldTree (\v f -> Simplex [v] : (prepend v <$> concat f))
 
@@ -54,7 +54,6 @@ completeOrd xs = (xs' !!) <$> complete (length xs' - 1)
 -- TODO: very inefficient use internal (sorted) structure of complex
 -- to find it more efficiently
 contained :: Eq a => Simplex a -> SimplicialComplex a -> Bool
-contained (Simplex []) _ = True
 contained s sc = s `elem` simplices sc
 
 -- TODO: efficient implementation
