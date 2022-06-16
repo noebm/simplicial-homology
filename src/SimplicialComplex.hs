@@ -18,17 +18,17 @@ draw :: Show a => SimplicialComplex a -> String
 draw (SimplicialComplex xs) = drawForest $ fmap (fmap show) xs
 
 simplices :: SimplicialComplex a -> [Simplex a]
-simplices (SimplicialComplex xs) = Simplex [] : (go =<< xs) where
+simplices (SimplicialComplex xs) = emptySimplex : (go =<< xs) where
   go :: Tree a -> [ Simplex a ]
-  go = foldTree (\v f -> Simplex [v] : (prepend v <$> concat f))
+  go = foldTree (\v f -> zeroSimplex v : (unsafePrepend v <$> concat f))
 
 simplexComplex :: Simplex a -> SimplicialComplex a
-simplexComplex (Simplex s) = SimplicialComplex $ go s where
+simplexComplex s = SimplicialComplex $ go (toList s) where
   go [] = []
   go (s0:s) = let !sc = go s in Node s0 sc: sc
 
 insert :: Ord a => Simplex a -> SimplicialComplex a -> SimplicialComplex a
-insert (Simplex s) (SimplicialComplex sc) = SimplicialComplex $ go s sc where
+insert s (SimplicialComplex sc) = SimplicialComplex $ go (toList s) sc where
 
   go :: Ord a => [a] -> Forest a -> Forest a
   go [] sc = sc

@@ -4,8 +4,10 @@ import Lib
 import Test.QuickCheck
 
 prop_SimplexOrdered :: Ord a => Simplex a -> Bool
-prop_SimplexOrdered (Simplex []) = True
-prop_SimplexOrdered (Simplex xs) = all (uncurry (<)) $ zip (init xs) (tail xs)
+prop_SimplexOrdered s | xs <- toList s =
+  case xs of
+    [] -> True
+    _  -> all (uncurry (<)) $ zip (init xs) (tail xs)
 
 prop_complexId :: (Eq a, Ord a) => SimplicialComplex a -> Bool
 prop_complexId sc = fromSimplices (simplices sc) == sc
