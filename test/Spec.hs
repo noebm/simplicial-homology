@@ -38,6 +38,11 @@ prop_Simplex_fromList_multiplicity_invariant xs =
     let s = fromList xs
      in length xs < 10 ==> fromList (nub xs) == s
 
+prop_Simplex_fromList_toList_sameset:: Ord a => [a] -> Bool
+prop_Simplex_fromList_toList_sameset xs =
+  let ys = toList (fromList xs)
+  in all (`elem` xs) ys && all (`elem` ys) xs
+
 instance (Ord a, Arbitrary a) => Arbitrary (Simplex a) where
   arbitrary = fromList <$> (arbitrary `suchThat` ((<10) . length))
 
