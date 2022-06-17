@@ -33,6 +33,9 @@ resolver:
 #   - wai
 packages:
 - .
+
+extra-deps:
+- SmithNormalForm-0.1.0.0@sha256:c941b6cff6db301d933e1cf0cfadaa145b74939e8ad6e004348db46e71b76f72
 # Dependency packages to be pulled from upstream that are not in the resolver.
 # These entries can reference officially published versions as well as
 # forks / in-progress versions pinned to a git hash. For example:
