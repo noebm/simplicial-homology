@@ -57,12 +57,10 @@ completeOrd xs = (xs' !!) <$> complete (length xs' - 1)
 contained :: Eq a => Simplex a -> SimplicialComplex a -> Bool
 contained s sc = s `elem` simplices sc
 
--- TODO: efficient implementation
 dimension :: Ord a => SimplicialComplex a -> Int
-dimension (SimplicialComplex xs) = (\x -> x - 1) $
-  if null xs
-     then 0
-     else maximum $ length . levels <$> xs
+dimension (SimplicialComplex xs) =
+  aux (foldTree (const aux) <$> xs) - 1
+  where aux xs = if null xs then 0 else 1 + maximum xs
 
 step :: SimplicialComplex a -> [(a, SimplicialComplex a)]
 step sc = do
