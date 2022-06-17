@@ -43,6 +43,9 @@ prop_Simplex_fromList_toList_sameset xs =
   let ys = toList (fromList xs)
   in all (`elem` xs) ys && all (`elem` ys) xs
 
+prop_all_cells_are_all_simplices sc =
+  sort (flip cells sc =<< [-1..dimension sc]) == sort (simplices sc)
+
 instance (Ord a, Arbitrary a) => Arbitrary (Simplex a) where
   arbitrary = fromList <$> (arbitrary `suchThat` ((<10) . length))
 

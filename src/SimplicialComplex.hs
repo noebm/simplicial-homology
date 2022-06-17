@@ -5,7 +5,7 @@ import Data.Tree
 import Data.List
 import Simplex
 
-newtype SimplicialComplex a = SimplicialComplex (Forest a)
+newtype SimplicialComplex a = SimplicialComplex { simplexTree :: Forest a }
   deriving (Show, Eq)
 
 emptyComplex :: SimplicialComplex a
@@ -63,3 +63,18 @@ dimension (SimplicialComplex xs) = (\x -> x - 1) $
   if null xs
      then 0
      else maximum $ length . levels <$> xs
+
+step :: SimplicialComplex a -> [(a, SimplicialComplex a)]
+step sc = do
+  t <- simplexTree sc
+  let a = rootLabel t
+  return (a, SimplicialComplex $ subForest t)
+
+cells :: Int -> SimplicialComplex a -> [Simplex a]
+cells n sc =
+  case (-1) `compare` n of
+    GT -> []
+    EQ -> [ emptySimplex ]
+    LT -> do
+      (c, sc') <- step sc
+      unsafePrepend c <$> cells (n-1) sc'
