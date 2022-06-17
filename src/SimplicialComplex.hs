@@ -107,17 +107,24 @@ boundaryBasis :: Eq a => [a] -> [a] -> Boundary a -> Boundary Int
 boundaryBasis facets cells (Boundary c fs) = Boundary (get cells c) (get facets <$> fs)
   where get basis = fromJust . flip elemIndex basis
 
-type Matrix a = [(Int, Int, a)]
+type AssocMatrix a = (Int, Int, [(Int, Int, a)])
 
-incidenceMatrices :: Eq a => SimplicialComplex a -> [Matrix Int]
-incidenceMatrices sc = go (allCells sc) where
+assocMatrix :: Num a => AssocMatrix a -> (Int, Int, [ a ])
+assocMatrix (m, n, xs) =
+  let ys = sortBy (\(i,j,_) (i',j',_) -> (i,j) `compare` (i',j')) xs
+      go (i,j) (i',j',v) = let k = (i' - i) * n + (j' - j) -1
+                            in ((i',j'), replicate k 0 ++ [v])
+   in (,,) m n $ concat $ snd $ mapAccumL go (0,0) ys
+
+incidences :: (Eq a, Num b) => SimplicialComplex a -> [AssocMatrix b]
+incidences sc = go (allCells sc) where
   boundaryMap cell = Boundary cell (boundary cell)
 
   aux face cell = do
-    Boundary i js <- boundaryBasis face cell . boundaryMap <$> cell
-    (j, v)  <- zip js (cycle [1, -1])
+    Boundary j is <- boundaryBasis face cell . boundaryMap <$> cell
+    (i, v)  <- zip is (cycle [1, -1])
     return (i, j, v)
 
   go list = do
     (face, cell) <- zip list (tail list)
-    return $ aux face cell
+    return $ (,,) (length face) (length cell) $ aux face cell
