@@ -58,21 +58,38 @@ contained :: Eq a => Simplex a -> SimplicialComplex a -> Bool
 contained s sc = s `elem` simplices sc
 
 dimension :: Ord a => SimplicialComplex a -> Int
-dimension (SimplicialComplex xs) =
-  aux (foldTree (const aux) <$> xs) - 1
-  where aux xs = if null xs then 0 else 1 + maximum xs
+dimension sc = foldSC aux sc - 1 where
+  aux xs = if null xs then 0 else 1 + maximum (snd <$> xs)
 
+{-# INLINE step #-}
 step :: SimplicialComplex a -> [(a, SimplicialComplex a)]
 step sc = do
   t <- simplexTree sc
   let a = rootLabel t
   return (a, SimplicialComplex $ subForest t)
 
+-- | Fold simplicial complex
+foldSC :: ([(a , b)] -> b) -> SimplicialComplex a -> b
+foldSC f = go where
+  go sc = f $ do
+    (x, sc') <- step sc
+    return (x , go sc')
+
+-- | Fold simplicial complex with information about current dimension
+foldSCdim :: (Int -> [(a , b)] -> b) -> SimplicialComplex a -> b
+foldSCdim f = go (-1) where
+  go n sc = f n $ do
+    (x, sc') <- step sc
+    return (x , go (n+1) sc')
+
 cells :: Int -> SimplicialComplex a -> [Simplex a]
-cells n sc =
-  case (-1) `compare` n of
-    GT -> []
-    EQ -> [ emptySimplex ]
-    LT -> do
-      (c, sc') <- step sc
-      unsafePrepend c <$> cells (n-1) sc'
+cells n = foldSCdim go where
+  go :: Int -> [(a, [Simplex a])] -> [Simplex a]
+  go m xs
+    -- currently at level n
+    | m == n = [ emptySimplex ]
+    -- early termination (no simplex of size n found)
+    | null xs = []
+    | otherwise = do
+      (x, simpls) <- xs
+      unsafePrepend x <$> simpls
