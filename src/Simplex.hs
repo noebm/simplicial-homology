@@ -8,6 +8,7 @@ module Simplex
   zeroSimplex,
   unsafePrepend,
   faces,
+  boundary,
   )
   where
 
@@ -41,3 +42,9 @@ subsets (x:xs) = subsets xs ++ map (x:) (subsets xs)
 -- | All subsimplices contained in Simplex.
 faces :: Simplex a -> [Simplex a]
 faces (Simplex xs) = Simplex <$> subsets xs
+
+-- | Boundary ordered by index
+boundary :: Simplex a -> [Simplex a]
+boundary (Simplex xs) = Simplex <$> go xs where
+  go [] = []
+  go (x:xs) = xs: ((x:) <$> go xs)

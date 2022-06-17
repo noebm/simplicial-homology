@@ -2,6 +2,7 @@
 module SimplicialComplex where
 
 import Data.Tree
+import Data.Maybe
 import Data.List
 import Simplex
 
@@ -93,3 +94,30 @@ cells n = foldSCdim go where
     | otherwise = do
       (x, simpls) <- xs
       unsafePrepend x <$> simpls
+
+allCells :: SimplicialComplex a -> [[Simplex a]]
+allCells sc = takeWhile (not . null) $ flip cells sc <$> [(-1)..]
+
+data Boundary a = Boundary {
+  cell :: a,
+  facets :: [a]
+} deriving (Show)
+
+boundaryBasis :: Eq a => [a] -> [a] -> Boundary a -> Boundary Int
+boundaryBasis facets cells (Boundary c fs) = Boundary (get cells c) (get facets <$> fs)
+  where get basis = fromJust . flip elemIndex basis
+
+type Matrix a = [(Int, Int, a)]
+
+incidenceMatrices :: Eq a => SimplicialComplex a -> [Matrix Int]
+incidenceMatrices sc = go (allCells sc) where
+  boundaryMap cell = Boundary cell (boundary cell)
+
+  aux face cell = do
+    Boundary i js <- boundaryBasis face cell . boundaryMap <$> cell
+    (j, v)  <- zip js (cycle [1, -1])
+    return (i, j, v)
+
+  go list = do
+    (face, cell) <- zip list (tail list)
+    return $ aux face cell
