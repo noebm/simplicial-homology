@@ -47,16 +47,6 @@ insert s (SimplicialComplex sc) = SimplicialComplex $ go (toList s) sc where
 fromSimplices :: Ord a => [Simplex a] -> SimplicialComplex a
 fromSimplices = foldr SimplicialComplex.insert emptyComplex
 
-complete :: Int -> SimplicialComplex Int
-complete = SimplicialComplex . go where
-
-  go :: Int -> [ Tree Int ]
-  go n = unfoldForest (\l -> (l, [l+1..n])) [0..n]
-
-completeOrd :: Ord a => [a] -> SimplicialComplex a
-completeOrd xs = (xs' !!) <$> complete (length xs' - 1)
-  where xs' = map head . group . sort $ xs
-
 -- TODO: very inefficient use internal (sorted) structure of complex
 -- to find it more efficiently
 contained :: Eq a => Simplex a -> SimplicialComplex a -> Bool
