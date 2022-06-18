@@ -27,5 +27,4 @@ main = do
   putStrLn "complete 2"
   putStr $ draw (complete 2)
 
-  putStrLn "completeOrd \"abc\""
-  putStr $ draw (completeOrd "abc")
+  print $ homology realP2
