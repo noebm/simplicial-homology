@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns, NamedFieldPuns #-}
 module SimplicialComplex where
 
 import Data.Tree
@@ -110,8 +110,21 @@ assocMatrix (m, n, xs) =
                             in ((i',j'), replicate k 0 ++ [v])
    in (,,) m n $ concat $ snd $ mapAccumL go (0,0) ys
 
-incidences :: (Eq a, Num b) => SimplicialComplex a -> [AssocMatrix b]
-incidences sc = go $ [] : tail (allCells sc) where
+-- | Bounded chain complex of free groups
+-- chainBoundaries n should be a map from R ^ chainDimensions (n + 1) to R ^ chainDimensions n.
+data ChainComplex a = ChainComplex
+  { chainDimensions :: [Int]
+  , chainBoundaries :: [a]
+  } deriving (Show)
+
+instance Functor ChainComplex where
+  fmap f (ChainComplex dims d) = ChainComplex dims (f <$> d)
+
+data LinearMap a = FiniteMap { from :: Int, to :: Int, repr :: a } | MapToZero Int | MapFromZero Int
+  deriving Show
+
+incidences :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (AssocMatrix b)
+incidences sc = mkComplex $ go $ allCells sc where
   boundaryMap cell = Boundary cell (boundary cell)
 
   aux face cell = do
@@ -123,28 +136,32 @@ incidences sc = go $ [] : tail (allCells sc) where
     (face, cell) <- zip list (tail list)
     return $ (,,) (length face) (length cell) $ aux face cell
 
-boundaries :: Eq a => SimplicialComplex a -> [ M.Matrix Integer ]
-boundaries = fixZero . fmap toMatrix . incidences where
-  -- most likely terrifingly slow!
-  toMatrix (m, n, assoc) = M.matrix m n $ \(i,j) -> fromMaybe 0 ((i-1,j-1) `lookup` assoc)
+  mkComplex [] = ChainComplex [] []
+  mkComplex xs =
+    let dims = fmap (\(_,m,_) -> m) xs
+        ys = (0, head dims, []):tail xs ++ [(last dims, 0, [])]
+    in ChainComplex (0: dims ++ [0]) ys
 
-  -- remove C0 -> C-1 map
-  -- matrix cannot handle matrices with zero rows/cols
-  fixZero = tail
+boundaries :: Eq a => SimplicialComplex a -> ChainComplex (LinearMap (M.Matrix Integer))
+boundaries = fmap toMatrix . incidences where
+  -- most likely terrifingly slow!
+  toMatrix (m, n, assoc)
+    | m == 0 = MapToZero n
+    | n == 0 = MapFromZero m
+    | otherwise = FiniteMap n m $ M.matrix m n $ \(i,j) -> fromMaybe 0 ((i-1,j-1) `lookup` assoc)
 
 data HomologyFactors = HomologyFactors { free :: Int, torsion :: V.Vector Int }
   deriving (Show, Eq)
 
--- TODO does not work for 0-simplices since the dimensions are infered by boundary maps
 homology :: Eq a => SimplicialComplex a -> [ HomologyFactors ]
-homology sc = go (insertZeroMaps smith) where
+homology sc = go . chainBoundaries $ smith where
   -- information about image and domain dimensionality and rank
-  smith = fmap (extract . smithNormalForm) . boundaries $ sc
-  extract m = (M.nrows m, M.ncols m, V.filter (/= 0) $ M.getDiag m)
+  smith = fmap extract . boundaries $ sc
 
-  insertZeroMaps xs =
-    let (m,_,_) = head xs
-        (_,n,_) = last xs
-     in (0, m, V.empty):xs ++ [(n,0,V.empty)]
-  go xs = zipWith aux xs (tail xs)
-  aux (_,_, rb) (dim, _, ra) = HomologyFactors (dim - V.length ra - V.length rb) $ V.map fromIntegral ra
+  extract linmap = case linmap of
+    FiniteMap {from, to, repr} -> (M.nrows repr, M.ncols repr, V.filter (/= 0) $ M.getDiag $ smithNormalForm repr)
+    MapFromZero to -> (to, 0, V.empty)
+    MapToZero from -> (0, from, V.empty)
+
+  go xs = zipWith calcQuotient xs (tail xs)
+  calcQuotient (_,_, rb) (dim, _, ra) = HomologyFactors (dim - V.length ra - V.length rb) $ V.map fromIntegral ra
