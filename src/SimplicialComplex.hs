@@ -123,7 +123,7 @@ incidences sc = go $ [] : tail (allCells sc) where
     (face, cell) <- zip list (tail list)
     return $ (,,) (length face) (length cell) $ aux face cell
 
-boundaries :: Eq a => SimplicialComplex a -> [ M.Matrix Int ]
+boundaries :: Eq a => SimplicialComplex a -> [ M.Matrix Integer ]
 boundaries = fixZero . fmap toMatrix . incidences where
   -- most likely terrifingly slow!
   toMatrix (m, n, assoc) = M.matrix m n $ \(i,j) -> fromMaybe 0 ((i-1,j-1) `lookup` assoc)
@@ -137,14 +137,14 @@ data HomologyFactors = HomologyFactors { free :: Int, torsion :: V.Vector Int }
 
 -- TODO does not work for 0-simplices since the dimensions are infered by boundary maps
 homology :: Eq a => SimplicialComplex a -> [ HomologyFactors ]
-homology sc = go (insertZeroMap smith) where
+homology sc = go (insertZeroMaps smith) where
   -- information about image and domain dimensionality and rank
   smith = fmap (extract . smithNormalForm) . boundaries $ sc
   extract m = (M.nrows m, M.ncols m, V.filter (/= 0) $ M.getDiag m)
 
-  insertZeroMap xs =
+  insertZeroMaps xs =
     let (m,_,_) = head xs
         (_,n,_) = last xs
      in (0, m, V.empty):xs ++ [(n,0,V.empty)]
   go xs = zipWith aux xs (tail xs)
-  aux (_,_, rb) (dim, _, ra) = HomologyFactors (dim - V.length ra - V.length rb) ra
+  aux (_,_, rb) (dim, _, ra) = HomologyFactors (dim - V.length ra - V.length rb) $ V.map fromIntegral ra
