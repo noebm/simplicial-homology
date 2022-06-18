@@ -26,3 +26,6 @@ realP2 = fromSimplices . fmap fromList $
   , [2,4,5]
   , [2,3,5]
   ]
+
+sphere :: Int -> SimplicialComplex Int
+sphere n = fromSimplices . boundary . fromList $ [0..(n+1)]
