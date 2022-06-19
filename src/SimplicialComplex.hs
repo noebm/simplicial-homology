@@ -113,14 +113,11 @@ assocMatrix (m, n, xs) =
    in (,,) m n $ concat $ snd $ mapAccumL go (0,0) ys
 
 -- | Bounded chain complex of free groups
--- chainBoundaries n should be a map from R ^ chainDimensions (n + 1) to R ^ chainDimensions n.
-data ChainComplex a = ChainComplex
-  { chainDimensions :: [Int]
-  , chainBoundaries :: [a]
-  } deriving (Show)
+newtype ChainComplex a = ChainComplex { boundaryMaps :: [a] }
+  deriving (Show)
 
 instance Functor ChainComplex where
-  fmap f (ChainComplex dims d) = ChainComplex dims (f <$> d)
+  fmap f (ChainComplex d) = ChainComplex (f <$> d)
 
 data LinearMap a = FiniteMap { from :: Int, to :: Int, repr :: a } | MapToZero Int | MapFromZero Int
   deriving Show
@@ -157,11 +154,11 @@ incidences sc = mkComplex $ go $ allCells sc where
     (face, cell) <- zip list (tail list)
     return $ (,,) (length face) (length cell) $ aux face cell
 
-  mkComplex [] = ChainComplex [] []
+  mkComplex [] = ChainComplex []
   mkComplex xs =
     let dims = fmap (\(_,m,_) -> m) xs
         ys = (0, head dims, []):tail xs ++ [(last dims, 0, [])]
-    in ChainComplex (0: dims ++ [0]) ys
+    in ChainComplex ys
 
 boundaries :: Eq a => SimplicialComplex a -> ChainComplex (LinearMap (M.Matrix Integer))
 boundaries = fmap toMatrix . incidences where
@@ -175,7 +172,7 @@ data HomologyFactors = HomologyFactors { free :: Int, torsion :: V.Vector Int }
   deriving (Show, Eq)
 
 homology :: Eq a => SimplicialComplex a -> [ HomologyFactors ]
-homology sc = go . chainBoundaries $ smith where
+homology sc = go . boundaryMaps $ smith where
   -- information about image and domain dimensionality and rank
   smith = fmap (fmap invariantFactors) . boundaries $ sc
 
