@@ -139,34 +139,34 @@ codomainDim (FiniteMap _ to _) = to
 codomainDim (MapToZero _) = 0
 codomainDim (MapFromZero to) = to
 
-incidences :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (AssocMatrix b)
-incidences sc = mkComplex $ go $ allCells sc where
+assocChain :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (AssocMatrix b)
+assocChain sc = mkComplex $ genBoundaryMaps $ allCells sc where
   boundaryMap cell = Boundary cell (boundary cell)
 
-  aux face cell = do
+  boundaryCoefficients face cell = do
     Boundary j is <- boundaryBasis face cell . boundaryMap <$> cell
     (i, v)  <- zip is (cycle [1, -1])
     return ((i, j), v)
 
-  go list = do
+  genBoundaryMaps list = do
     (face, cell) <- zip list (tail list)
-    return $ FiniteMap (length cell) (length face) $ aux face cell
+    return $ FiniteMap (length cell) (length face) $ boundaryCoefficients face cell
 
   mkComplex [] = ChainComplex []
-  mkComplex xs = ChainComplex $ MapToZero (codomainDim $ head xs) : tail xs ++ [MapFromZero $ domainDim $ last xs]
+  mkComplex ds = ChainComplex $ MapToZero (codomainDim $ head ds) : tail ds ++ [MapFromZero $ domainDim $ last ds]
 
-boundaries :: Eq a => SimplicialComplex a -> ChainComplex (LinearMap (M.Matrix Integer))
-boundaries = fmap assocMatrix . incidences
+matrixChain :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (LinearMap (M.Matrix b))
+matrixChain = fmap assocMatrix . assocChain
+
+invariantChain :: (Eq a, Integral b) => SimplicialComplex a -> ChainComplex (LinearMap (V.Vector b))
+invariantChain = fmap (fmap invariantFactors) . matrixChain
 
 data HomologyFactors = HomologyFactors { free :: Int, torsion :: V.Vector Int }
   deriving (Show, Eq)
 
 homology :: Eq a => SimplicialComplex a -> [ HomologyFactors ]
-homology sc = go . boundaryMaps $ smith where
-  -- information about image and domain dimensionality and rank
-  smith = fmap (fmap invariantFactors) . boundaries $ sc
-
-  go xs = zipWith calcQuotient xs (tail xs)
+homology = quotients . boundaryMaps . invariantChain where
+  quotients xs = zipWith calcQuotient xs (tail xs)
 
   rank :: LinearMap (V.Vector a) -> Int
   rank = getSum . foldMap (Sum . length)
