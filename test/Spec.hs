@@ -94,6 +94,11 @@ prop_homology_of_spheres = once $
     let h = homology $ sphere n
      in all (null . torsion) h && ([1] ++ replicate (n - 1) 0 ++ [1] == (free <$> h))
 
+prop_homology_discrete n =
+    n > 0 ==>
+    let h = homology $ discrete n
+     in all (null . torsion) h && [n] == (free <$> h)
+
 return []
 runTests = $quickCheckAll
 
