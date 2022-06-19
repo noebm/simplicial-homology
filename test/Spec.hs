@@ -64,7 +64,7 @@ instance Arbitrary a => Arbitrary (M.Matrix a) where
 isDiagonal :: (Eq a, Num a) => M.Matrix a -> Bool
 isDiagonal m = all (== 0) [ M.unsafeGet i j m | i <- [1..M.nrows m], j <- [1..M.ncols m], i /= j]
 
-prop_diagonalize_isDiagonal m = isDiagonal $ diagonalize 1 m
+prop_diagonalize_isDiagonal m = withMaxSuccess 10000 $ isDiagonal $ diagonalize 1 m
 
 isEmptyNonPivotRow m (Pivot (t, jt)) = all (== 0) [M.getElem t j m | j <- [1..M.ncols m], j /= jt]
 isEmptyNonPivotCol m (Pivot (t, jt)) = all (== 0) [M.getElem i jt m | i <- [1..M.nrows m], i /= t]
