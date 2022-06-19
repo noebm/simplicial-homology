@@ -19,10 +19,6 @@ lastMaybe (x:xs) = lastMaybe xs <|> Just x
 dup :: a -> (a,a)
 dup x = (x,x)
 
--- matrix index with nonzero value
-findNonZero :: (Eq a, Num a) => V.Vector a -> Maybe Int
-findNonZero = V.findIndex (/= 0)
-
 diagonalize :: Integral a => Int -> M.Matrix a -> M.Matrix a
 diagonalize start m = last $ unfoldr (uncurry go) (max 1 (min dim start), m) where
   dim = M.nrows m
@@ -55,13 +51,14 @@ setupPivot m t = do
 pivot :: Integral a => M.Matrix a -> Int -> Maybe (Int, Int)
 pivot m t = amap go [t..M.ncols m] where
   go jt = do
-    t' <- (+ 1) <$> findNonZero (M.getCol jt m)
+    t' <- (+ 1) <$> V.findIndex (/= 0) (M.getCol jt m)
     return (t',jt)
 
 -- Makes column entries divisible by pivot & eliminates them
 elimColumnAtPivot :: Integral a => Pivot -> M.Matrix a -> Maybe (M.Matrix a)
 elimColumnAtPivot (Pivot (t, jt)) mat = lastMaybe $ unfoldr go (mat, nonzeros mat startIndices) where
 
+  -- TODO top left should be diagonal so this seems unnecessary (for [1..t-1])
   startIndices = [1..t-1] ++ [t+1..M.nrows mat]
   nonzeros m = filter (\i -> M.unsafeGet i jt m /= 0)
 
