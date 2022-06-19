@@ -4,6 +4,7 @@ import Lib
 import Test.QuickCheck
 import Data.List
 import qualified Data.Matrix as M
+import qualified Data.Vector as V
 import Data.Maybe
 import Control.Applicative
 
@@ -65,6 +66,13 @@ isDiagonal :: (Eq a, Num a) => M.Matrix a -> Bool
 isDiagonal m = all (== 0) [ M.unsafeGet i j m | i <- [1..M.nrows m], j <- [1..M.ncols m], i /= j]
 
 prop_diagonalize_isDiagonal m = withMaxSuccess 10000 $ isDiagonal $ diagonalize 1 m
+
+satisfiesDivisibilityCondition :: (Eq a, Integral a) => M.Matrix a -> Bool
+satisfiesDivisibilityCondition m = all (\(x,y) -> x /= 0 && y `rem` x == 0) $ V.zip diags $ V.tail diags
+  where diags = M.getDiag m
+
+prop_smithNormalForm m = withMaxSuccess 500 $
+  any (/= 0) m ==> let m' = smithNormalForm m in satisfiesDivisibilityCondition m' && isDiagonal m'
 
 isEmptyNonPivotRow m (Pivot (t, jt)) = all (== 0) [M.getElem t j m | j <- [1..M.ncols m], j /= jt]
 isEmptyNonPivotCol m (Pivot (t, jt)) = all (== 0) [M.getElem i jt m | i <- [1..M.nrows m], i /= t]
