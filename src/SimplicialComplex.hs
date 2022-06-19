@@ -103,14 +103,12 @@ boundaryBasis :: Eq a => [a] -> [a] -> Boundary a -> Boundary Int
 boundaryBasis facets cells (Boundary c fs) = Boundary (get cells c) (if null facets then [] else get facets <$> fs)
   where get basis = fromJust . flip elemIndex basis
 
-type AssocMatrix a = (Int, Int, [((Int, Int), a)])
+type AssocMatrix a = LinearMap [((Int, Int), a)]
 
-assocMatrix :: Num a => AssocMatrix a -> (Int, Int, [ a ])
-assocMatrix (m, n, xs) =
-  let ys = sortBy (\(pos,_) (pos',_) -> pos `compare` pos') xs
-      go (i,j) ((i',j'),v) = let k = (i' - i) * n + (j' - j) -1
-                            in ((i',j'), replicate k 0 ++ [v])
-   in (,,) m n $ concat $ snd $ mapAccumL go (0,0) ys
+assocMatrix :: Num a => AssocMatrix a -> LinearMap (M.Matrix a)
+assocMatrix (FiniteMap n m xs) = FiniteMap n m $ M.matrix m n $ \(i,j) -> fromMaybe 0 ((i-1,j-1) `lookup` xs)
+assocMatrix (MapToZero k) = MapToZero k
+assocMatrix (MapFromZero k) = MapFromZero k
 
 -- | Bounded chain complex of free groups
 newtype ChainComplex a = ChainComplex { boundaryMaps :: [a] }
@@ -152,21 +150,13 @@ incidences sc = mkComplex $ go $ allCells sc where
 
   go list = do
     (face, cell) <- zip list (tail list)
-    return $ (,,) (length face) (length cell) $ aux face cell
+    return $ FiniteMap (length cell) (length face) $ aux face cell
 
   mkComplex [] = ChainComplex []
-  mkComplex xs =
-    let dims = fmap (\(_,m,_) -> m) xs
-        ys = (0, head dims, []):tail xs ++ [(last dims, 0, [])]
-    in ChainComplex ys
+  mkComplex xs = ChainComplex $ MapToZero (codomainDim $ head xs) : tail xs ++ [MapFromZero $ domainDim $ last xs]
 
 boundaries :: Eq a => SimplicialComplex a -> ChainComplex (LinearMap (M.Matrix Integer))
-boundaries = fmap toMatrix . incidences where
-  -- most likely terrifingly slow!
-  toMatrix (m, n, assoc)
-    | m == 0 = MapToZero n
-    | n == 0 = MapFromZero m
-    | otherwise = FiniteMap n m $ M.matrix m n $ \(i,j) -> fromMaybe 0 ((i-1,j-1) `lookup` assoc)
+boundaries = fmap assocMatrix . incidences
 
 data HomologyFactors = HomologyFactors { free :: Int, torsion :: V.Vector Int }
   deriving (Show, Eq)
