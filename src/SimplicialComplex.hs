@@ -5,9 +5,9 @@ import Data.Tree
 import Data.Maybe
 import Data.List
 import Simplex
+import SmithNormalForm
 
 import qualified Data.Matrix as M
-import Data.Matrix.SmithNormalForm
 import qualified Data.Vector as V
 
 newtype SimplicialComplex a = SimplicialComplex { simplexTree :: Forest a }
@@ -158,10 +158,12 @@ homology sc = go . chainBoundaries $ smith where
   -- information about image and domain dimensionality and rank
   smith = fmap extract . boundaries $ sc
 
-  extract linmap = case linmap of
-    FiniteMap {from, to, repr} -> (M.nrows repr, M.ncols repr, V.filter (/= 0) $ M.getDiag $ smithNormalForm repr)
-    MapFromZero to -> (to, 0, V.empty)
-    MapToZero from -> (0, from, V.empty)
+  extract linmap =
+    case linmap of
+      FiniteMap {from, to, repr} -> (M.nrows repr, M.ncols repr, invariantFactors repr)
+      MapFromZero to -> (to, 0, V.empty)
+      MapToZero from -> (0, from, V.empty)
 
   go xs = zipWith calcQuotient xs (tail xs)
-  calcQuotient (_,_, rb) (dim, _, ra) = HomologyFactors (dim - V.length ra - V.length rb) $ V.map fromIntegral ra
+  calcQuotient (_,_, rb) (dim, _, ra) = HomologyFactors (dim - V.length ra - V.length rb)
+    (V.map fromIntegral $ V.filter (/= 1) ra)
