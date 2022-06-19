@@ -65,6 +65,7 @@ elimColumnAtPivot (Pivot (t, jt)) mat = lastMaybe $ unfoldr go (mat, nonzeros ma
   startIndices = [1..t-1] ++ [t+1..M.nrows mat]
   nonzeros m = filter (\i -> M.unsafeGet i jt m /= 0)
 
+  -- reduce accesses by keeping around the relevant indices
   go (m, indices) = do
     k <- amap pure indices
     let vPivot = M.unsafeGet t jt m
