@@ -4,6 +4,8 @@ module SimplicialComplex where
 import Data.Tree
 import Data.Maybe
 import Data.List
+import Data.Foldable
+import Data.Monoid
 import Simplex
 import SmithNormalForm
 
@@ -123,6 +125,25 @@ instance Functor ChainComplex where
 data LinearMap a = FiniteMap { from :: Int, to :: Int, repr :: a } | MapToZero Int | MapFromZero Int
   deriving Show
 
+instance Functor LinearMap where
+  fmap f (FiniteMap m n x) = FiniteMap m n (f x)
+  fmap f (MapToZero n) = MapToZero n
+  fmap f (MapFromZero m) = MapFromZero m
+
+instance Foldable LinearMap where
+  foldMap f (FiniteMap _ _ x) = f x
+  foldMap f _ = mempty
+
+domainDim :: LinearMap a -> Int
+domainDim (FiniteMap from _ _) = from
+domainDim (MapToZero from) = from
+domainDim (MapFromZero _) = 0
+
+codomainDim :: LinearMap a -> Int
+codomainDim (FiniteMap _ to _) = to
+codomainDim (MapToZero _) = 0
+codomainDim (MapFromZero to) = to
+
 incidences :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (AssocMatrix b)
 incidences sc = mkComplex $ go $ allCells sc where
   boundaryMap cell = Boundary cell (boundary cell)
@@ -156,14 +177,13 @@ data HomologyFactors = HomologyFactors { free :: Int, torsion :: V.Vector Int }
 homology :: Eq a => SimplicialComplex a -> [ HomologyFactors ]
 homology sc = go . chainBoundaries $ smith where
   -- information about image and domain dimensionality and rank
-  smith = fmap extract . boundaries $ sc
-
-  extract linmap =
-    case linmap of
-      FiniteMap {from, to, repr} -> (M.nrows repr, M.ncols repr, invariantFactors repr)
-      MapFromZero to -> (to, 0, V.empty)
-      MapToZero from -> (0, from, V.empty)
+  smith = fmap (fmap invariantFactors) . boundaries $ sc
 
   go xs = zipWith calcQuotient xs (tail xs)
-  calcQuotient (_,_, rb) (dim, _, ra) = HomologyFactors (dim - V.length ra - V.length rb)
-    (V.map fromIntegral $ V.filter (/= 1) ra)
+
+  rank :: LinearMap (V.Vector a) -> Int
+  rank = getSum . foldMap (Sum . length)
+
+  calcQuotient b a = HomologyFactors
+    (codomainDim a - rank a - rank b)
+    (V.map fromIntegral $ V.filter (/= 1) $ fold a)
