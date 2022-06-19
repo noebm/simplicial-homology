@@ -25,17 +25,17 @@ findNonZero = V.findIndex (/= 0)
 
 diagonalize :: Integral a => Int -> M.Matrix a -> M.Matrix a
 diagonalize start m = last $ unfoldr (uncurry go) (max 1 (min dim start), m) where
-  dim = M.ncols m
+  dim = M.nrows m
   go n mat = do
     guard (n <= dim)
-    let diagAbs x = M.setElem (abs $ M.getElem n n x) (n,n) x
+    let diagAbs (Pivot (t,jt), x) = (\x -> M.setElem (abs $ M.getElem n n x) (n,n) x) $ M.switchCols t jt x
     mat' <- diagAbs <$> diagStep mat n <|> pure mat
     return (mat', (n+1, mat'))
 
-diagStep :: Integral a => M.Matrix a -> Int -> Maybe (M.Matrix a)
+diagStep :: Integral a => M.Matrix a -> Int -> Maybe (Pivot, M.Matrix a)
 diagStep m t = do
   (p, m') <- setupPivot m t
-  elimAtPivot p m' <|> pure m'
+  (,) p <$> (elimAtPivot p m' <|> pure m')
 
 newtype Pivot = Pivot (Int,Int)
   deriving Show

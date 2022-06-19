@@ -77,8 +77,10 @@ prop_smithNormalForm m = withMaxSuccess 500 $
 isEmptyNonPivotRow m (Pivot (t, jt)) = all (== 0) [M.getElem t j m | j <- [1..M.ncols m], j /= jt]
 isEmptyNonPivotCol m (Pivot (t, jt)) = all (== 0) [M.getElem i jt m | i <- [1..M.nrows m], i /= t]
 
-prop_nonzero_pivot m = any (/= 0) m ==>
-  forAll (elements [1..M.ncols m]) $ isJust . pivot m
+prop_nonzero_pivot m =
+  forAll (elements [1..M.ncols m]) $ \k ->
+    any (/= 0) (M.submatrix 1 (M.nrows m) k (M.ncols m) m) ==>
+      isJust (pivot m k)
 
 prop_elimColumnAtPivot_nondiagonal_zero mat =
   any (/= 0) mat ==>
