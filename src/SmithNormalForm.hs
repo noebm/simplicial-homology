@@ -38,15 +38,15 @@ flipPivot (Pivot (t, jt)) = Pivot (jt, t)
 
 setupPivot :: Integral a => M.Matrix a -> Int -> Maybe (Pivot, M.Matrix a)
 setupPivot m t = do
-  (t', jt) <- pivot m t
+  (t', jt) <- firstNonzero m t
   let m' = if t' /= t then M.switchRows t t' m else m
   let p = Pivot (t, jt)
   return (p, m')
 
 -- first row column pair (t', jt) such that such that jt >= t that has a nonzero entry
 -- this might not depend on t but on j_(t - 1)
-pivot :: Integral a => M.Matrix a -> Int -> Maybe (Int, Int)
-pivot m t = amap go [t..M.ncols m] where
+firstNonzero :: Integral a => M.Matrix a -> Int -> Maybe (Int, Int)
+firstNonzero m t = amap go [t..M.ncols m] where
   go jt = do
     t' <- (+ 1) <$> V.findIndex (/= 0) (M.getCol jt m)
     return (t',jt)
