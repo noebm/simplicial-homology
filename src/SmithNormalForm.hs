@@ -4,10 +4,8 @@ import qualified Data.Matrix as M
 import qualified Data.Vector as V
 import Data.Foldable hiding (find)
 import Data.List
-import Data.Maybe
 
 import Control.Applicative
-import Control.Monad
 
 amap :: (Functor t, Foldable t, Alternative f) => (a -> f b) -> t a -> f b
 amap f = asum . fmap f
@@ -20,12 +18,11 @@ dup :: a -> (a,a)
 dup x = (x,x)
 
 diagonalize :: Integral a => Int -> M.Matrix a -> M.Matrix a
-diagonalize start m = last $ unfoldr (uncurry go) (max 1 (min dim start), m) where
+diagonalize start m = last $ m: unfoldr (uncurry go) (max 1 (min dim start), m) where
   dim = M.nrows m
   go n mat = do
-    guard (n <= dim)
     let diagAbs (Pivot (t,jt), x) = (\x -> M.setElem (abs $ M.getElem n n x) (n,n) x) $ M.switchCols t jt x
-    mat' <- diagAbs <$> diagStep mat n <|> pure mat
+    mat' <- diagAbs <$> diagStep mat n
     return (mat', (n+1, mat'))
 
 diagStep :: Integral a => M.Matrix a -> Int -> Maybe (Pivot, M.Matrix a)
@@ -58,19 +55,18 @@ pivot m t = amap go [t..M.ncols m] where
 elimColumnAtPivot :: Integral a => Pivot -> M.Matrix a -> Maybe (M.Matrix a)
 elimColumnAtPivot (Pivot (t, jt)) mat = lastMaybe $ unfoldr go (mat, nonzeros mat startIndices) where
 
-  -- TODO top left should be diagonal so this seems unnecessary (for [1..t-1])
-  startIndices = [1..t-1] ++ [t+1..M.nrows mat]
+  startIndices = [t+1..M.nrows mat]
   nonzeros m = filter (\i -> M.unsafeGet i jt m /= 0)
 
   -- reduce accesses by keeping around the relevant indices
   go (m, indices) = do
-    k <- amap pure indices
+    (k, indices') <- uncons indices
     let vPivot = M.unsafeGet t jt m
     let vNonzero = M.unsafeGet k jt m
     let (q, r) = vNonzero `divMod` vPivot
     let m' = M.combineRows k (-q) t m
-    let (m'', indices') = if r /= 0 then (M.switchRows t k m', indices) else (m', tail indices)
-    return (m'', (m'', indices'))
+    let (m'', indices'') = if r /= 0 then (M.switchRows t k m', indices) else (m', indices')
+    return (m'', (m'', indices''))
 
 elimRowAtPivot p = fmap M.transpose . elimColumnAtPivot (flipPivot p) . M.transpose
 
@@ -86,11 +82,12 @@ elimAtPivot p = lastMaybe . unfoldr (fmap dup . step)
     let m'' = elimRow =<< (m' <|> pure m)
     m'' <|> m'
 
+-- tries to repair all divisibilies at once
+-- and returns the first relevant index as a hint for diagonalisation step
 repairDivisibility :: Integral a => M.Matrix a -> Maybe (Int, M.Matrix a)
-repairDivisibility m =
-  if null nondiv
-     then Nothing
-     else Just (head nondiv, foldl' (.) id (modifier <$> nondiv) m)
+repairDivisibility m = do
+  (index, _) <- uncons nondiv
+  return (index, foldr ($) m (modifier <$> nondiv))
   where mn = min (M.ncols m) (M.nrows m)
         check i =
           let y = M.getElem (i + 1) (i + 1) m
@@ -102,10 +99,7 @@ repairDivisibility m =
 smithNormalForm :: Integral a => M.Matrix a -> M.Matrix a
 smithNormalForm mat = last $ m0 : unfoldr go m0 where
   m0 = diagonalize 1 mat
-  go m = do
-    (index, m') <- repairDivisibility m
-    let m'' = diagonalize index m'
-    return (m'', m'')
+  go m = dup . uncurry diagonalize <$> repairDivisibility m
 
 invariantFactors :: Integral a => M.Matrix a -> V.Vector a
 invariantFactors = V.filter (/= 0) . M.getDiag . smithNormalForm
