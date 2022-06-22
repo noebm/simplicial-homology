@@ -2,20 +2,10 @@ module SmithNormalForm where
 
 import qualified Data.Matrix as M
 import qualified Data.Vector as V
-import Data.Foldable hiding (find)
 import Data.List
-
 import Control.Applicative
 
-amap :: (Functor t, Foldable t, Alternative f) => (a -> f b) -> t a -> f b
-amap f = asum . fmap f
-
-lastMaybe :: [a] -> Maybe a
-lastMaybe [] = Nothing
-lastMaybe (x:xs) = lastMaybe xs <|> Just x
-
-dup :: a -> (a,a)
-dup x = (x,x)
+import Utilities
 
 diagonalize :: Integral a => Int -> M.Matrix a -> M.Matrix a
 diagonalize start m = last $ m: unfoldr (uncurry go) (max 1 (min dim start), m) where

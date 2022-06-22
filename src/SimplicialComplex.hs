@@ -6,11 +6,14 @@ import Data.Maybe
 import Data.List
 import Data.Foldable
 import Data.Monoid
-import Simplex
-import SmithNormalForm
-
 import qualified Data.Matrix as M
 import qualified Data.Vector as V
+
+import Simplex
+import ChainComplex
+import Homology
+import Boundary
+import Utilities
 
 newtype SimplicialComplex a = SimplicialComplex { simplexTree :: Forest a }
   deriving (Show, Eq)
@@ -97,86 +100,16 @@ cells n = foldSCdim go where
 allCells :: SimplicialComplex a -> [[Simplex a]]
 allCells sc = takeWhile (not . null) $ flip cells sc <$> [0..]
 
-data Boundary a = Boundary {
-  cell :: a,
-  facets :: [a]
-} deriving (Show)
-
-boundaryBasis :: Eq a => [a] -> [a] -> Boundary a -> Boundary Int
-boundaryBasis facets cells (Boundary c fs) = Boundary (get cells c) (if null facets then [] else get facets <$> fs)
-  where get basis = fromJust . flip elemIndex basis
-
--- | Bounded chain complex of free groups
-newtype ChainComplex a = ChainComplex { boundaryMaps :: [LinearMap a] }
-  deriving (Show)
-
-mapChain :: (LinearMap a -> LinearMap b) -> ChainComplex a -> ChainComplex b
-mapChain f = ChainComplex . fmap f . boundaryMaps
-
-instance Functor ChainComplex where
-  fmap f (ChainComplex d) = ChainComplex (fmap f <$> d)
-
-data LinearMap a = FiniteMap { from :: Int, to :: Int, repr :: a } | MapToZero Int | MapFromZero Int
-  deriving Show
-
-instance Functor LinearMap where
-  fmap f (FiniteMap m n x) = FiniteMap m n (f x)
-  fmap f (MapToZero n) = MapToZero n
-  fmap f (MapFromZero m) = MapFromZero m
-
-instance Foldable LinearMap where
-  foldMap f (FiniteMap _ _ x) = f x
-  foldMap f _ = mempty
-
-mapWithSize :: (Int -> Int -> a -> b) -> LinearMap a -> LinearMap b
-mapWithSize f (FiniteMap dom codom x) = FiniteMap dom codom (f dom codom x)
-mapWithSize f (MapToZero dom) = MapToZero dom
-mapWithSize f (MapFromZero codom) = MapFromZero codom
-
-domainDim :: LinearMap a -> Int
-domainDim (FiniteMap from _ _) = from
-domainDim (MapToZero from) = from
-domainDim (MapFromZero _) = 0
-
-codomainDim :: LinearMap a -> Int
-codomainDim (FiniteMap _ to _) = to
-codomainDim (MapToZero _) = 0
-codomainDim (MapFromZero to) = to
-
 boundaryChain :: Eq a => SimplicialComplex a -> ChainComplex [Boundary Int]
 boundaryChain sc = mkComplex (size sc) . aux $ allCells sc where
   aux cs = do
     (face, cell) <- zip cs (tail cs)
-    return $ FiniteMap (length cell) (length face) $ boundaryBasis face cell . boundaryMap <$> cell
+    return $ FiniteMap (length cell) (length face) $ boundaryBasis face cell . simplexBoundary <$> cell
 
-  boundaryMap cell = Boundary cell (boundary cell)
   mkComplex c0 ds = ChainComplex $ MapToZero c0 : ds ++ [MapFromZero $ maybe c0 domainDim (lastMaybe ds)]
-
-boundaryMatrix :: Num a => Int -> Int -> [Boundary Int] -> M.Matrix a
-boundaryMatrix dom codom bs = M.matrix codom dom go where
-  table = do
-    Boundary j is <- bs
-    (i, v) <- zip is (cycle [1,-1])
-    return ((i, j), v)
-
-  go (i,j) = fromMaybe 0 ((i-1,j-1) `lookup` table)
 
 matrixChain :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (M.Matrix b)
 matrixChain = mapChain (mapWithSize boundaryMatrix) . boundaryChain
-
-data HomologyFactors = HomologyFactors { free :: Int, torsion :: V.Vector Int }
-  deriving (Show, Eq)
-
-homology :: Integral a => ChainComplex (M.Matrix a) -> [ HomologyFactors ]
-homology = quotients . boundaryMaps . fmap invariantFactors where
-  quotients xs = zipWith calcQuotient xs (tail xs)
-
-  rank :: LinearMap (V.Vector a) -> Int
-  rank = getSum . foldMap (Sum . length)
-
-  calcQuotient b a = HomologyFactors
-    (codomainDim a - rank a - rank b)
-    (V.map fromIntegral $ V.filter (/= 1) $ fold a)
 
 simplicialHomology :: Eq a => SimplicialComplex a -> [ HomologyFactors ]
 simplicialHomology = homology . matrixChain

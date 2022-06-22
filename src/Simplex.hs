@@ -8,12 +8,14 @@ module Simplex
   zeroSimplex,
   unsafePrepend,
   faces,
-  boundary,
+  simplexBoundary,
   )
   where
 
 import Data.List
 import Data.Foldable (toList)
+
+import Boundary
 
 newtype Simplex a = Simplex [a]
   deriving (Show, Ord, Eq, Functor, Foldable)
@@ -44,7 +46,7 @@ faces :: Simplex a -> [Simplex a]
 faces (Simplex xs) = Simplex <$> subsets xs
 
 -- | Boundary ordered by index
-boundary :: Simplex a -> [Simplex a]
-boundary (Simplex xs) = Simplex <$> go xs where
+simplexBoundary :: Simplex a -> Boundary (Simplex a)
+simplexBoundary (Simplex xs) = Boundary (Simplex xs) (Simplex <$> go xs) where
   go [] = []
   go (x:xs) = xs: ((x:) <$> go xs)

@@ -2,6 +2,8 @@ module Examples where
 
 import SimplicialComplex
 import Simplex
+import Boundary
+
 import Data.Tree
 import Data.List
 
@@ -28,7 +30,7 @@ realP2 = fromSimplices . fmap fromList $
   ]
 
 sphere :: Int -> SimplicialComplex Int
-sphere n = fromSimplices . boundary . fromList $ [0..(n+1)]
+sphere n = fromSimplices . facets . simplexBoundary . fromList $ [0..(n+1)]
 
 discrete :: Int -> SimplicialComplex Int
 discrete n = fromSimplices . fmap fromList $ [ [k] | k <- [0..n-1] ]
