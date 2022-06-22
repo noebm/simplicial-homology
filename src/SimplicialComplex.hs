@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, NamedFieldPuns #-}
+{-# LANGUAGE BangPatterns #-}
 module SimplicialComplex where
 
 import Data.Tree
@@ -107,11 +107,14 @@ boundaryBasis facets cells (Boundary c fs) = Boundary (get cells c) (if null fac
   where get basis = fromJust . flip elemIndex basis
 
 -- | Bounded chain complex of free groups
-newtype ChainComplex a = ChainComplex { boundaryMaps :: [a] }
+newtype ChainComplex a = ChainComplex { boundaryMaps :: [LinearMap a] }
   deriving (Show)
 
+mapChain :: (LinearMap a -> LinearMap b) -> ChainComplex a -> ChainComplex b
+mapChain f = ChainComplex . fmap f . boundaryMaps
+
 instance Functor ChainComplex where
-  fmap f (ChainComplex d) = ChainComplex (f <$> d)
+  fmap f (ChainComplex d) = ChainComplex (fmap f <$> d)
 
 data LinearMap a = FiniteMap { from :: Int, to :: Int, repr :: a } | MapToZero Int | MapFromZero Int
   deriving Show
@@ -140,7 +143,7 @@ codomainDim (FiniteMap _ to _) = to
 codomainDim (MapToZero _) = 0
 codomainDim (MapFromZero to) = to
 
-boundaryChain :: Eq a => SimplicialComplex a -> ChainComplex (LinearMap [Boundary Int])
+boundaryChain :: Eq a => SimplicialComplex a -> ChainComplex [Boundary Int]
 boundaryChain sc = mkComplex (size sc) . aux $ allCells sc where
   aux cs = do
     (face, cell) <- zip cs (tail cs)
@@ -158,17 +161,14 @@ boundaryMatrix dom codom bs = M.matrix codom dom go where
 
   go (i,j) = fromMaybe 0 ((i-1,j-1) `lookup` table)
 
-matrixChain :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (LinearMap (M.Matrix b))
-matrixChain = fmap (mapWithSize boundaryMatrix) . boundaryChain
-
-invariantChain :: (Eq a, Integral b) => SimplicialComplex a -> ChainComplex (LinearMap (V.Vector b))
-invariantChain = fmap (fmap invariantFactors) . matrixChain
+matrixChain :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (M.Matrix b)
+matrixChain = mapChain (mapWithSize boundaryMatrix) . boundaryChain
 
 data HomologyFactors = HomologyFactors { free :: Int, torsion :: V.Vector Int }
   deriving (Show, Eq)
 
-homology :: Eq a => SimplicialComplex a -> [ HomologyFactors ]
-homology = quotients . boundaryMaps . invariantChain where
+homology :: Integral a => ChainComplex (M.Matrix a) -> [ HomologyFactors ]
+homology = quotients . boundaryMaps . fmap invariantFactors where
   quotients xs = zipWith calcQuotient xs (tail xs)
 
   rank :: LinearMap (V.Vector a) -> Int
@@ -177,3 +177,6 @@ homology = quotients . boundaryMaps . invariantChain where
   calcQuotient b a = HomologyFactors
     (codomainDim a - rank a - rank b)
     (V.map fromIntegral $ V.filter (/= 1) $ fold a)
+
+simplicialHomology :: Eq a => SimplicialComplex a -> [ HomologyFactors ]
+simplicialHomology = homology . matrixChain

@@ -106,12 +106,12 @@ prop_elimAtPivot_nondiagonal_zero mat =
 
 prop_homology_of_spheres = once $
   forAll (elements [1..6]) $ \n ->
-    let h = homology $ sphere n
+    let h = simplicialHomology $ sphere n
      in all (null . torsion) h && ([1] ++ replicate (n - 1) 0 ++ [1] == (free <$> h))
 
 prop_homology_discrete n =
     n > 0 ==>
-    let h = homology $ discrete n
+    let h = simplicialHomology $ discrete n
      in all (null . torsion) h && [n] == (free <$> h)
 
 return []

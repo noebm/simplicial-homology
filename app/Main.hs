@@ -6,7 +6,7 @@ import Data.Tree
 main :: IO ()
 main = do
   putStrLn "Homology of RP^2"
-  print $ homology realP2
+  print $ simplicialHomology realP2
 
   putStrLn "Homology of S^4"
-  print $ homology $ sphere 4
+  print $ simplicialHomology $ sphere 4
