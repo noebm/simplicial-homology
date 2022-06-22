@@ -19,7 +19,7 @@ prop_complexId sc = fromSimplices (simplices sc) == sc
 
 prop_simplicialComplex_chainComplex_consistent :: Eq a => SimplicialComplex a -> Bool
 prop_simplicialComplex_chainComplex_consistent sc =
-  let ChainComplex ds = assocChain sc
+  let ChainComplex ds = boundaryChain sc
    in isJust (uncons ds) && all (\(pn, n) -> domainDim pn == codomainDim n) (zip ds (tail ds))
 
 prop_simplexId :: Ord a => [Simplex a] -> Bool

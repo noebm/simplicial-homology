@@ -106,13 +106,6 @@ boundaryBasis :: Eq a => [a] -> [a] -> Boundary a -> Boundary Int
 boundaryBasis facets cells (Boundary c fs) = Boundary (get cells c) (if null facets then [] else get facets <$> fs)
   where get basis = fromJust . flip elemIndex basis
 
-type AssocMatrix a = LinearMap [((Int, Int), a)]
-
-assocMatrix :: Num a => AssocMatrix a -> LinearMap (M.Matrix a)
-assocMatrix (FiniteMap n m xs) = FiniteMap n m $ M.matrix m n $ \(i,j) -> fromMaybe 0 ((i-1,j-1) `lookup` xs)
-assocMatrix (MapToZero k) = MapToZero k
-assocMatrix (MapFromZero k) = MapFromZero k
-
 -- | Bounded chain complex of free groups
 newtype ChainComplex a = ChainComplex { boundaryMaps :: [a] }
   deriving (Show)
@@ -132,6 +125,11 @@ instance Foldable LinearMap where
   foldMap f (FiniteMap _ _ x) = f x
   foldMap f _ = mempty
 
+mapWithSize :: (Int -> Int -> a -> b) -> LinearMap a -> LinearMap b
+mapWithSize f (FiniteMap dom codom x) = FiniteMap dom codom (f dom codom x)
+mapWithSize f (MapToZero dom) = MapToZero dom
+mapWithSize f (MapFromZero codom) = MapFromZero codom
+
 domainDim :: LinearMap a -> Int
 domainDim (FiniteMap from _ _) = from
 domainDim (MapToZero from) = from
@@ -142,23 +140,26 @@ codomainDim (FiniteMap _ to _) = to
 codomainDim (MapToZero _) = 0
 codomainDim (MapFromZero to) = to
 
-assocChain :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (AssocMatrix b)
-assocChain sc = mkComplex (size sc) $ genBoundaryMaps $ allCells sc where
+boundaryChain :: Eq a => SimplicialComplex a -> ChainComplex (LinearMap [Boundary Int])
+boundaryChain sc = mkComplex (size sc) . aux $ allCells sc where
+  aux cs = do
+    (face, cell) <- zip cs (tail cs)
+    return $ FiniteMap (length cell) (length face) $ boundaryBasis face cell . boundaryMap <$> cell
+
   boundaryMap cell = Boundary cell (boundary cell)
-
-  boundaryCoefficients face cell = do
-    Boundary j is <- boundaryBasis face cell . boundaryMap <$> cell
-    (i, v)  <- zip is (cycle [1, -1])
-    return ((i, j), v)
-
-  genBoundaryMaps list = do
-    (face, cell) <- zip list (tail list)
-    return $ FiniteMap (length cell) (length face) $ boundaryCoefficients face cell
-
   mkComplex c0 ds = ChainComplex $ MapToZero c0 : ds ++ [MapFromZero $ maybe c0 domainDim (lastMaybe ds)]
 
+boundaryMatrix :: Num a => Int -> Int -> [Boundary Int] -> M.Matrix a
+boundaryMatrix dom codom bs = M.matrix codom dom go where
+  table = do
+    Boundary j is <- bs
+    (i, v) <- zip is (cycle [1,-1])
+    return ((i, j), v)
+
+  go (i,j) = fromMaybe 0 ((i-1,j-1) `lookup` table)
+
 matrixChain :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (LinearMap (M.Matrix b))
-matrixChain = fmap assocMatrix . assocChain
+matrixChain = fmap (mapWithSize boundaryMatrix) . boundaryChain
 
 invariantChain :: (Eq a, Integral b) => SimplicialComplex a -> ChainComplex (LinearMap (V.Vector b))
 invariantChain = fmap (fmap invariantFactors) . matrixChain
