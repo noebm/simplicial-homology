@@ -58,6 +58,9 @@ dimension :: Ord a => SimplicialComplex a -> Int
 dimension sc = foldSC aux sc - 1 where
   aux xs = if null xs then 0 else 1 + maximum (snd <$> xs)
 
+size :: SimplicialComplex a -> Int
+size = foldSC length
+
 {-# INLINE step #-}
 step :: SimplicialComplex a -> [(a, SimplicialComplex a)]
 step sc = do
@@ -92,7 +95,7 @@ cells n = foldSCdim go where
       unsafePrepend x <$> simpls
 
 allCells :: SimplicialComplex a -> [[Simplex a]]
-allCells sc = takeWhile (not . null) $ flip cells sc <$> [(-1)..]
+allCells sc = takeWhile (not . null) $ flip cells sc <$> [0..]
 
 data Boundary a = Boundary {
   cell :: a,
@@ -140,7 +143,7 @@ codomainDim (MapToZero _) = 0
 codomainDim (MapFromZero to) = to
 
 assocChain :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (AssocMatrix b)
-assocChain sc = mkComplex $ genBoundaryMaps $ allCells sc where
+assocChain sc = mkComplex (size sc) $ genBoundaryMaps $ allCells sc where
   boundaryMap cell = Boundary cell (boundary cell)
 
   boundaryCoefficients face cell = do
@@ -152,8 +155,7 @@ assocChain sc = mkComplex $ genBoundaryMaps $ allCells sc where
     (face, cell) <- zip list (tail list)
     return $ FiniteMap (length cell) (length face) $ boundaryCoefficients face cell
 
-  mkComplex [] = ChainComplex []
-  mkComplex ds = ChainComplex $ MapToZero (codomainDim $ head ds) : tail ds ++ [MapFromZero $ domainDim $ last ds]
+  mkComplex c0 ds = ChainComplex $ MapToZero c0 : ds ++ [MapFromZero $ maybe c0 domainDim (lastMaybe ds)]
 
 matrixChain :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (LinearMap (M.Matrix b))
 matrixChain = fmap assocMatrix . assocChain
