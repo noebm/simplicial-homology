@@ -11,8 +11,11 @@ import SmithNormalForm
 data HomologyFactors = HomologyFactors { free :: Int, torsion :: V.Vector Int }
   deriving (Show, Eq)
 
-homology :: Integral a => ChainComplex (M.Matrix a) -> [ HomologyFactors ]
-homology = quotients . boundaryMaps . fmap invariantFactors where
+newtype Homology = Homology { getFactors :: [HomologyFactors] }
+  deriving (Show, Eq)
+
+homology :: Integral a => ChainComplex (M.Matrix a) -> Homology
+homology = Homology . quotients . boundaryMaps . fmap invariantFactors where
   quotients xs = zipWith calcQuotient xs (tail xs)
 
   rank :: LinearMap (V.Vector a) -> Int
@@ -22,3 +25,8 @@ homology = quotients . boundaryMaps . fmap invariantFactors where
     (codomainDim a - rank a - rank b)
     (V.map fromIntegral $ V.filter (/= 1) $ fold a)
 
+betti :: Homology -> [ Int ]
+betti = fmap free . getFactors
+
+torsions :: Homology -> [[Int]]
+torsions = fmap (V.toList . torsion) . getFactors

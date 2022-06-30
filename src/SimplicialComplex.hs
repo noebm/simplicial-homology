@@ -111,5 +111,5 @@ boundaryChain sc = mkComplex (size sc) . aux $ allCells sc where
 matrixChain :: (Eq a, Num b) => SimplicialComplex a -> ChainComplex (M.Matrix b)
 matrixChain = mapChain (mapWithSize boundaryMatrix) . boundaryChain
 
-simplicialHomology :: Eq a => SimplicialComplex a -> [ HomologyFactors ]
+simplicialHomology :: Eq a => SimplicialComplex a -> Homology
 simplicialHomology = homology . matrixChain
