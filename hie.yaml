@@ -1,13 +1,13 @@
 cradle:
   stack:
     - path: "./src"
-      component: "simplex-tree:lib"
+      component: "simplicial-homology:lib"
 
     - path: "./app/Main.hs"
-      component: "simplex-tree:exe:simplex-tree-exe"
+      component: "simplicial-homology:exe:simplicial-homology-exe"
 
     - path: "./app/Paths_simplex_tree.hs"
-      component: "simplex-tree:exe:simplex-tree-exe"
+      component: "simplicial-homology:exe:simplicial-homology-exe"
 
     - path: "./test"
-      component: "simplex-tree:test:simplex-tree-test"
+      component: "simplicial-homology:test:simplicial-homology-test"
