@@ -14,7 +14,6 @@ complete = SimplicialComplex . go where
   go n = unfoldForest (\l -> (l, [l+1..n])) [0..n]
 
 -- | Triangulation of RP2
--- Calculation currently hangs because of smith normal form implementation
 realP2 :: SimplicialComplex Int
 realP2 = fromSimplices . fmap fromList $
   [ [0,1,2]
