@@ -58,8 +58,8 @@ contained :: Eq a => Simplex a -> SimplicialComplex a -> Bool
 contained s sc = s `elem` simplices sc
 
 dimension :: Ord a => SimplicialComplex a -> Int
-dimension sc = foldSC aux sc - 1 where
-  aux xs = if null xs then 0 else 1 + maximum (snd <$> xs)
+dimension = foldSCdim dim where
+  dim n xs = if null xs then n else maximum (snd <$> xs)
 
 size :: SimplicialComplex a -> Int
 size = foldSC length
