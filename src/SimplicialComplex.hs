@@ -57,7 +57,7 @@ fromSimplices = foldr SimplicialComplex.insert emptyComplex
 contained :: Eq a => Simplex a -> SimplicialComplex a -> Bool
 contained s sc = s `elem` simplices sc
 
-dimension :: Ord a => SimplicialComplex a -> Int
+dimension :: SimplicialComplex a -> Int
 dimension = foldSCdim dim where
   dim n xs = if null xs then n else maximum (snd <$> xs)
 
