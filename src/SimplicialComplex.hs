@@ -71,19 +71,16 @@ step sc = do
   let a = rootLabel t
   return (a, SimplicialComplex $ subForest t)
 
--- | Fold simplicial complex
-foldSC :: ([(a , b)] -> b) -> SimplicialComplex a -> b
-foldSC f = go where
-  go sc = f $ do
-    (x, sc') <- step sc
-    return (x , go sc')
-
 -- | Fold simplicial complex with information about current dimension
 foldSCdim :: (Int -> [(a , b)] -> b) -> SimplicialComplex a -> b
 foldSCdim f = go (-1) where
   go n sc = f n $ do
     (x, sc') <- step sc
     return (x , go (n+1) sc')
+
+-- | Fold simplicial complex
+foldSC :: ([(a , b)] -> b) -> SimplicialComplex a -> b
+foldSC f = foldSCdim (const f)
 
 cells :: Int -> SimplicialComplex a -> [Simplex a]
 cells n = foldSCdim go where
