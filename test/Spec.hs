@@ -1,6 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-import Lib
+import SimplicialHomology
+import SimplicialHomology.SmithNormalForm
+import SimplicialHomology.SimplicialComplex.Examples
 import Test.QuickCheck
 import Data.List
 import qualified Data.Matrix as M

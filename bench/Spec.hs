@@ -2,7 +2,7 @@
 import Criterion.Main
 
 import qualified Data.Matrix as M
-import SmithNormalForm
+import SimplicialHomology.SmithNormalForm
 
 rp2_boundarymap1 = M.fromList 6 15 [-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,-1,-1,-1,-1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,-1,-1,-1,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0,-1,-1,0,0,0,0,1,0,0,0,1,0,0,1,0,1,0,-1,0,0,0,0,1,0,0,0,1,0,0,1,0,1,1]
 
