@@ -1,4 +1,4 @@
-module ChainComplex where
+module SimplicialHomology.ChainComplex where
 
 -- | Bounded chain complex of free groups
 newtype ChainComplex a = ChainComplex { boundaryMaps :: [LinearMap a] }

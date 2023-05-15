@@ -1,11 +1,11 @@
-module SmithNormalForm where
+module SimplicialHomology.SmithNormalForm where
 
 import qualified Data.Matrix as M
 import qualified Data.Vector as V
 import Data.List
 import Control.Applicative
 
-import Utilities
+import SimplicialHomology.Utilities
 
 diagonalize :: Integral a => Int -> M.Matrix a -> M.Matrix a
 diagonalize start m = last $ m: unfoldr (uncurry go) (max 1 (min dim start), m) where

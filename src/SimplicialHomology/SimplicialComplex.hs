@@ -1,5 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
-module SimplicialComplex where
+module SimplicialHomology.SimplicialComplex where
 
 import Data.Tree
 import Data.Maybe
@@ -9,11 +9,11 @@ import Data.Monoid
 import qualified Data.Matrix as M
 import qualified Data.Vector as V
 
-import Simplex
-import ChainComplex
-import Homology
-import Boundary
-import Utilities
+import SimplicialHomology.Simplex
+import SimplicialHomology.ChainComplex
+import SimplicialHomology.Homology
+import SimplicialHomology.Boundary
+import SimplicialHomology.Utilities
 
 newtype SimplicialComplex a = SimplicialComplex { simplexTree :: Forest a }
   deriving (Show, Eq)
@@ -50,7 +50,7 @@ insert s (SimplicialComplex sc) = SimplicialComplex $ go (toList s) sc where
       GT -> head sc : go s sc'
 
 fromSimplices :: Ord a => [Simplex a] -> SimplicialComplex a
-fromSimplices = foldr SimplicialComplex.insert emptyComplex
+fromSimplices = foldr SimplicialHomology.SimplicialComplex.insert emptyComplex
 
 -- TODO: very inefficient use internal (sorted) structure of complex
 -- to find it more efficiently

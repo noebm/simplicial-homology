@@ -1,12 +1,12 @@
-module Homology where
+module SimplicialHomology.Homology where
 
 import qualified Data.Matrix as M
 import qualified Data.Vector as V
 import Data.Foldable
 import Data.Monoid
 
-import ChainComplex
-import SmithNormalForm
+import SimplicialHomology.ChainComplex
+import SimplicialHomology.SmithNormalForm
 
 data HomologyFactors = HomologyFactors { free :: Int, torsion :: V.Vector Int }
   deriving (Show, Eq)

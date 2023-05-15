@@ -1,5 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module Simplex
+module SimplicialHomology.Simplex
   (
   Simplex,
   fromList,
@@ -15,7 +15,7 @@ module Simplex
 import Data.List
 import Data.Foldable (toList)
 
-import Boundary
+import SimplicialHomology.Boundary
 
 newtype Simplex a = Simplex [a]
   deriving (Show, Ord, Eq, Functor, Foldable)

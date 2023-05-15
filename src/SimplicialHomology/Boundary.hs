@@ -1,4 +1,4 @@
-module Boundary where
+module SimplicialHomology.Boundary where
 
 import qualified Data.Matrix as M
 import Data.Maybe

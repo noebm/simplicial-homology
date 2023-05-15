@@ -1,4 +1,4 @@
-module Utilities where
+module SimplicialHomology.Utilities where
 
 import Data.Foldable
 import Control.Applicative

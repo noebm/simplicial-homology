@@ -1,8 +1,8 @@
-module Examples where
+module SimplicialHomology.SimplicialComplex.Examples where
 
-import SimplicialComplex
-import Simplex
-import Boundary
+import SimplicialHomology.SimplicialComplex
+import SimplicialHomology.Simplex
+import SimplicialHomology.Boundary
 
 import Data.Tree
 import Data.List
