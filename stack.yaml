@@ -19,7 +19,7 @@
 # resolver: https://example.com/snapshots/2018-01-01.yaml
 system-ghc: true
 
-resolver: lts-20.20
+resolver: lts-21.17
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
