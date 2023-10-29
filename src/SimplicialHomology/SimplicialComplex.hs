@@ -2,10 +2,7 @@
 module SimplicialHomology.SimplicialComplex where
 
 import Data.Tree
-import Data.Maybe
-import Data.List
 import Data.Foldable
-import Data.Monoid
 import qualified Data.Matrix as M
 import qualified Data.Vector as V
 
@@ -50,7 +47,7 @@ insert s (SimplicialComplex sc) = SimplicialComplex $ go (toList s) sc where
       GT -> head sc : go s sc'
 
 fromSimplices :: Ord a => [Simplex a] -> SimplicialComplex a
-fromSimplices = foldr SimplicialHomology.SimplicialComplex.insert emptyComplex
+fromSimplices = foldr insert emptyComplex
 
 -- TODO: very inefficient use internal (sorted) structure of complex
 -- to find it more efficiently
