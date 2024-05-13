@@ -7,7 +7,6 @@ copyright:           "2022 Moritz Noebauer"
 
 extra-source-files:
 - README.md
-- ChangeLog.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
