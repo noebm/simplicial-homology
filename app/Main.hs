@@ -1,7 +1,7 @@
 module Main where
 
-import SimplicialHomology.SimplicialComplex.Examples
 import SimplicialHomology
+import SimplicialHomology.SimplicialComplex.Examples
 
 main :: IO ()
 main = do

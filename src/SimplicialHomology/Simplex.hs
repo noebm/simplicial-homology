@@ -1,20 +1,19 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module SimplicialHomology.Simplex
-  (
-  Simplex,
-  fromList,
-  toList,
-  emptySimplex,
-  zeroSimplex,
-  unsafePrepend,
-  faces,
-  simplexBoundary,
+  ( Simplex,
+    fromList,
+    toList,
+    emptySimplex,
+    zeroSimplex,
+    unsafePrepend,
+    faces,
+    simplexBoundary,
   )
-  where
+where
 
-import Data.List
 import Data.Foldable (toList)
-
+import Data.List
 import SimplicialHomology.Boundary
 
 newtype Simplex a = Simplex [a]
@@ -22,7 +21,7 @@ newtype Simplex a = Simplex [a]
 
 -- | Generate Simplex from a list (interpreted as a set).
 -- So duplicates get removed and permutations generate the same Simplex.
-fromList :: Ord a => [a] -> Simplex a
+fromList :: (Ord a) => [a] -> Simplex a
 fromList = Simplex . map head . group . sort
 
 -- | Unsafe. Might lead to inconsistent (read unordered simplices).
@@ -35,11 +34,11 @@ emptySimplex = Simplex []
 
 -- | Simplex consisting of a single point.
 zeroSimplex :: a -> Simplex a
-zeroSimplex = Simplex . (:[])
+zeroSimplex = Simplex . (: [])
 
 subsets :: [a] -> [[a]]
 subsets [] = [[]]
-subsets (x:xs) = subsets xs ++ map (x:) (subsets xs)
+subsets (x : xs) = subsets xs ++ map (x :) (subsets xs)
 
 -- | All subsimplices contained in Simplex.
 faces :: Simplex a -> [Simplex a]
@@ -47,6 +46,7 @@ faces (Simplex xs) = Simplex <$> subsets xs
 
 -- | Boundary ordered by index
 simplexBoundary :: Simplex a -> Boundary (Simplex a)
-simplexBoundary (Simplex xs) = Boundary (Simplex xs) (Simplex <$> go xs) where
-  go [] = []
-  go (x:xs) = xs: ((x:) <$> go xs)
+simplexBoundary (Simplex xs) = Boundary (Simplex xs) (Simplex <$> go xs)
+  where
+    go [] = []
+    go (x : xs) = xs : ((x :) <$> go xs)
