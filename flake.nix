@@ -1,23 +1,30 @@
 {
   inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
 
-  outputs = {
-    self,
-    nixpkgs,
-  }: let
-    system = "x86_64-linux";
-    ghcVersion = "94"; # needs to be synced to stack ghc version
-  in {
-    devShells.${system}.default = let
-      pkgs = import nixpkgs {
-        inherit system;
+  outputs =
+    {
+      self,
+      nixpkgs,
+    }:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs { inherit system; };
+      haskellPackages = pkgs.haskellPackages;
+      project = haskellPackages.developPackage {
+        root = ./.;
+        modifier = drv: drv;
       };
     in
-      pkgs.mkShell {
-        buildInputs = with pkgs; [
-          stack
-          (pkgs.haskell-language-server.override {supportedGhcVersions = [ghcVersion];})
+    {
+      packages.${system}.default = project;
+      devShells.${system}.default = haskellPackages.shellFor {
+        packages = p: [ project ];
+        buildInputs = with pkgs.haskellPackages; [
+          haskell-language-server
+          ghcid
+          cabal-install
+          hlint
         ];
       };
-  };
+    };
 }
